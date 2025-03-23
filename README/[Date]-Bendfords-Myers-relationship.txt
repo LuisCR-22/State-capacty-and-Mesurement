@@ -1,0 +1,47 @@
+[Date]-Bendfords-Myers-relationship-GLD.r - README
+
+Overview
+This R script performs comprehensive data quality analysis on GLD datasets using Benford's Law (on wages) and Myers Index (on age). It assesses the distribution patterns of first digits in wage data and terminal digits in age data, which can help identify potential data quality issues or manipulation. The underlying idea is to check if places where a lower state capacity, related with age heaping in househould surveys and lower trust in the state, related with higher deviations from the Bendford's law in income/wage data are correlated.
+
+Key Features
+- Analyzes wage data across multiple countries and years
+- Calculates both Benford's Law metrics (for wage first digits) and Myers Index (for age heaping)
+- Generates statistical correlations between different data quality metrics
+- Creates visualizations to help interpret relationships between metrics
+- Filters data (monthly wages as reported by the surveyed people, working age population 15-90)
+- Handles outliers using IQR method
+
+Outputs
+Excel File
+The script generates an Excel workbook named [CURRENT_DATE]-GLD_Benford_Myers_Analysis-V3.xlsx with five sheets:
+
+Country-Year Results: Contains the detailed metrics for each country-year combination
+
+Standard and normalized Myers Index values
+Metrics to assess deviations from Benford's Law  (correlation, absolute distance, chi-square, MAE)
+Statistical test for deviation from Bendford's Law (Kuiper and Kolmogorov-Smirnov)
+
+Correlations Matrix: Correlation coefficients between indicators related to Bendford's Law and those related to the Myers index at country-year level
+Country Correlations: Country-specific correlations between Myers Index and Benford metrics
+Period Correlations: Correlation metrics aggregated for 5-year periods
+Column Explanations: Detailed descriptions of all columns in the other sheets
+
+Visualizations
+Scatter plots are saved in a date-based subfolder ([CURRENT_DATE]) under the PNG output directory:
+
+Metric Plots: Four types of Benford metrics (Y-axis) compared against Myers Index (X-axis):
+
+benford_abs_distance.png - Sum of absolute differences from Benford's Law
+benford_chi_square.png - Chi-square statistic for Benford's Law fit
+benford_mae.png - Mean Absolute Error from Benford's Law
+benford_correlation.png - Correlation with Benford's Law expected frequencies
+
+
+Weighted Plots: Same as above but weighted by sample size (e.g., benford_abs_distance_weighted.png)
+Period Plots: Aggregated metrics for 5-year periods (e.g., period_benford_abs_distance.png)
+
+Each plot includes three regression lines (linear, quadratic, and LOWESS) to help visualize relationships between metrics.
+Usage
+The script reads .dta files from the input directory, processes each country's data separately, and generates the Excel report and visualizations in their respective output directories. It requires at least 100 observations per country-year to perform calculations.
+Interpretation
+Higher Myers Index values indicate more age heaping or digit preference in age reporting. Larger deviations from Benford's Law (higher distance/chi-square/MAE values or lower correlations) suggest potential data quality issues with wage reporting. The correlation between these metrics helps identify consistent patterns of data irregularities.
