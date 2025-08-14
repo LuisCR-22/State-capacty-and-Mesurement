@@ -1,8 +1,8 @@
 ########################################
-# Benford Wage Analysis - Enhanced Version with Residualization
+# Benford Wage Analysis - Modified Version V3 Only
 ########################################
 # Author: Luis Castellanos Rodriguez
-# Modified: 2025-03-26
+# Modified: 2025-04-01
 
 # 0. Clean up workspace and load libraries
 rm(list = ls())
@@ -23,17 +23,11 @@ input_path <- "C:/Users/wb593225/OneDrive - WBG/Desktop/Luis - Private/Mesuremen
 # New output paths as specified
 current_date <- format(Sys.Date(), "%Y-%m-%d")
 output_path_excel <- "C:/Users/wb593225/OneDrive - WBG/Desktop/Luis - Private/Mesurement project/Out of Repo/Outputs/Excel"
-output_path_plots_base <- "C:/Users/wb593225/OneDrive - WBG/Desktop/Luis - Private/Mesurement project/Out of Repo/Outputs/PNG/Myers vs. Bendford"
-output_path_plots <- file.path(output_path_plots_base, current_date)
+output_path_plots <- "C:/Users/wb593225/OneDrive - WBG/Desktop/Luis - Private/Mesurement project/Out of Repo/Outputs/PNG/Myers vs. Bendford/2025-04-01"
 
 # Create directories if they don't exist
 dir.create(output_path_excel, showWarnings = FALSE, recursive = TRUE)
 dir.create(output_path_plots, showWarnings = FALSE, recursive = TRUE)
-
-# Create version-specific directories
-dir.create(file.path(output_path_plots, "V1"), showWarnings = FALSE, recursive = TRUE)
-dir.create(file.path(output_path_plots, "V2"), showWarnings = FALSE, recursive = TRUE)
-dir.create(file.path(output_path_plots, "V3"), showWarnings = FALSE, recursive = TRUE)
 
 # 2. Define the Benford expected probabilities for digits 1 to 9
 benford_expected <- log10(1 + 1/(1:9))
@@ -309,7 +303,6 @@ residualize_data <- function(data, outcome_var) {
   return(residuals)
 }
 
-
 # Process Version 1 - Remove extreme Myers values
 # We use a more rigorous method than just a 0.7 threshold:
 # Calculate threshold as Q3 + 1.5*IQR (standard for outlier detection)
@@ -367,18 +360,9 @@ process_version3 <- function(results) {
   return(results_v3)
 }
 
-# Apply the three processing versions
-if (nrow(results) > 0) {
-  results_v1 <- process_version1(results)
-  results_v2 <- process_version2(results)
-  results_v3 <- process_version3(results)
-} else {
-  stop("No results generated to process.")
-}
-
 # 10. Create improved scatter plot function with country-based colors and clear labels
-# MODIFIED: Added confidence bands (95% level) to regression lines
-# MODIFIED: Changed LOWESS line color and confidence interval to less fluorescent tones
+# MODIFIED: Added horizontal red line at y=0
+# MODIFIED: Changed linear regression line to solid black with gray confidence bands
 create_improved_scatter_plot <- function(data, x_var, y_var, y_label, 
                                          correlation_value = NULL, weighted = FALSE,
                                          title_prefix = "") {
@@ -457,11 +441,14 @@ create_improved_scatter_plot <- function(data, x_var, y_var, y_label,
                               labels = countries,
                               breaks = countries)
   
+  # Add horizontal red line at y=0
+  p <- p + geom_hline(yintercept = 0, color = "red")
+  
   # Add regression lines WITH 95% CONFIDENCE BANDS (modified from original)
   if (weighted) {
-    # Linear regression (blue) with confidence bands
+    # Linear regression (black solid line) with gray confidence bands
     p <- p + geom_smooth(method = "lm", formula = y ~ x, se = TRUE, 
-                         linetype = "dashed", color = "blue", fill = "lightblue", alpha = 0.3,
+                         linetype = "solid", color = "black", fill = "gray", alpha = 0.3,
                          aes(weight = n_observations))
     
     # LOWESS smoothing with more muted colors
@@ -469,9 +456,9 @@ create_improved_scatter_plot <- function(data, x_var, y_var, y_label,
                          linetype = "dashed", color = "darkgreen", fill = "#E0F0E0", alpha = 0.3,
                          span = 0.75, aes(weight = n_observations))
   } else {
-    # Linear regression (blue) with confidence bands
+    # Linear regression (black solid line) with gray confidence bands
     p <- p + geom_smooth(method = "lm", formula = y ~ x, se = TRUE, 
-                         linetype = "dashed", color = "blue", fill = "lightblue", alpha = 0.3)
+                         linetype = "solid", color = "black", fill = "gray", alpha = 0.3)
     
     # LOWESS smoothing with more muted colors
     p <- p + geom_smooth(method = "loess", formula = y ~ x, se = TRUE, 
@@ -507,7 +494,7 @@ create_improved_scatter_plot <- function(data, x_var, y_var, y_label,
     "text",
     x = max(data[[x_var]], na.rm = TRUE) - 0.05 * diff(range(data[[x_var]], na.rm = TRUE)),
     y = min(data[[y_var]], na.rm = TRUE) + 0.10 * diff(range(data[[y_var]], na.rm = TRUE)),
-    label = "Blue line: Linear (with 95% CI), Green line: LOWESS (with 95% CI)",
+    label = "Black line: Linear (with 95% CI), Green line: LOWESS (with 95% CI)",
     hjust = 1,
     size = 3
   )
@@ -520,8 +507,8 @@ create_improved_scatter_plot <- function(data, x_var, y_var, y_label,
   return(p)
 }
 
-# Function to generate correlation tables for each version
-create_correlation_tables <- function(data, is_residualized = FALSE) {
+# Function to create correlation tables
+create_correlation_tables <- function(data, is_residualized = TRUE) {
   # Define variables to use
   if (is_residualized) {
     myers_var <- "residual_standardized_myers"
@@ -593,7 +580,7 @@ create_correlation_tables <- function(data, is_residualized = FALSE) {
 }
 
 # Function to create explanation tables
-create_explanations <- function(is_residualized = FALSE) {
+create_explanations <- function(is_residualized = TRUE) {
   explanations <- data.frame(
     sheet = character(),
     column = character(),
@@ -689,36 +676,19 @@ create_explanations <- function(is_residualized = FALSE) {
   return(explanations)
 }
 
-# Function to create plots for each version
-# MODIFIED: Updated to save plots in version-specific subdirectories
-create_plots <- function(data, version_num, is_residualized = FALSE) {
-  # Define variables to use
-  if (is_residualized) {
-    x_var <- "residual_standardized_myers"
-    metrics <- list(
-      list(var = "residual_benford_abs_distance", label = "Absolute Distance from Benford's Law"),
-      list(var = "residual_benford_chi_square", label = "Chi-Square Statistic"),
-      list(var = "residual_benford_mae", label = "Mean Absolute Error"),
-      list(var = "residual_benford_correlation", label = "Correlation with Benford's Law")
-    )
-  } else {
-    x_var <- "standardized_myers"
-    metrics <- list(
-      list(var = "benford_abs_distance", label = "Absolute Distance from Benford's Law"),
-      list(var = "benford_chi_square", label = "Chi-Square Statistic"),
-      list(var = "benford_mae", label = "Mean Absolute Error"),
-      list(var = "benford_correlation", label = "Correlation with Benford's Law")
-    )
-  }
-  
-  # Generate title prefix based on version
-  title_prefixes <- list(
-    "1" = "No Extreme Myers Values",
-    "2" = "Residualized Variables",
-    "3" = "Residualized Variables, No Extreme Myers Values"
+# Function to create plots for V3 version
+create_v3_plots <- function(data) {
+  # For V3, we use residualized variables
+  x_var <- "residual_standardized_myers"
+  metrics <- list(
+    list(var = "residual_benford_abs_distance", label = "Absolute Distance from Benford's Law"),
+    list(var = "residual_benford_chi_square", label = "Chi-Square Statistic"),
+    list(var = "residual_benford_mae", label = "Mean Absolute Error"),
+    list(var = "residual_benford_correlation", label = "Correlation with Benford's Law")
   )
   
-  title_prefix <- title_prefixes[[as.character(version_num)]]
+  # Use V3 title
+  title_prefix <- "Residualized Variables, No Extreme Myers Values"
   
   # Create plots for each metric
   for (metric in metrics) {
@@ -740,12 +710,11 @@ create_plots <- function(data, version_num, is_residualized = FALSE) {
       title_prefix = title_prefix
     )
     
-    # Save plot with new naming convention and in version-specific directory
-    plot_filename <- paste0(current_date, "-myers-", short_metric, "-V", version_num, ".png")
-    output_dir <- file.path(output_path_plots, paste0("V", version_num))
+    # Save plot with new naming convention
+    plot_filename <- paste0(current_date, "-myers-", short_metric, "-V3.png")
     
     ggsave(
-      filename = file.path(output_dir, plot_filename),
+      filename = file.path(output_path_plots, plot_filename),
       plot = p_unweighted,
       width = 10,
       height = 7,
@@ -763,11 +732,11 @@ create_plots <- function(data, version_num, is_residualized = FALSE) {
       title_prefix = title_prefix
     )
     
-    # Save weighted plot with new naming convention and in version-specific directory
-    weighted_plot_filename <- paste0(current_date, "-myers-", short_metric, "-weighted-V", version_num, ".png")
+    # Save weighted plot with new naming convention
+    weighted_plot_filename <- paste0(current_date, "-myers-", short_metric, "-weighted-V3.png")
     
     ggsave(
-      filename = file.path(output_dir, weighted_plot_filename),
+      filename = file.path(output_path_plots, weighted_plot_filename),
       plot = p_weighted,
       width = 10,
       height = 7,
@@ -776,67 +745,39 @@ create_plots <- function(data, version_num, is_residualized = FALSE) {
   }
 }
 
-# Main processing workflow - generate all three versions of results
-# Define a function to create and run all three versions
-run_all_analyses <- function(results) {
-  # Process the data in each of the three ways
-  message("Creating Version 1: removing extreme Myers values...")
-  results_v1 <- process_version1(results)
-  
-  message("Creating Version 2: residualizing variables...")
-  results_v2 <- process_version2(results)
-  
-  message("Creating Version 3: combining both approaches...")
+# Main processing workflow - ONLY generate V3 (combining both approaches)
+if (nrow(results) > 0) {
+  # Process V3 (both remove outliers and residualize)
+  message("Creating Version 3: removing extreme Myers values and residualizing variables...")
   results_v3 <- process_version3(results)
   
-  # Process each version and create outputs
-  process_and_create_outputs <- function(data, version_num, is_residualized = FALSE) {
-    # Create correlation tables
-    corr_tables <- create_correlation_tables(data, is_residualized)
-    
-    # Create explanations
-    explanations <- create_explanations(is_residualized)
-    
-    # Create plots
-    create_plots(data, version_num, is_residualized)
-    
-    # Create Excel filename (updated naming convention)
-    excel_filename <- paste0(current_date, "-Myers_Bendford-V", version_num, ".xlsx")
-    
-    # Prepare data for Excel export
-    list_of_data <- list(
-      "Country-Year Results" = data,
-      "Correlations Matrix" = as.data.frame(corr_tables$correlations_matrix),
-      "Country Correlations" = corr_tables$country_correlations,
-      "Column Explanations" = explanations
-    )
-    
-    # Export to Excel
-    write_xlsx(list_of_data, file.path(output_path_excel, excel_filename))
-    
-    message("Version ", version_num, " analysis complete. Excel results saved to ", 
-            file.path(output_path_excel, excel_filename))
-    message("Version ", version_num, " plots saved to ", 
-            file.path(output_path_plots, paste0("V", version_num)))
-  }
+  # Create correlation tables for V3
+  corr_tables <- create_correlation_tables(results_v3, is_residualized = TRUE)
   
-  # Process each version
-  message("Processing Version 1 outputs...")
-  process_and_create_outputs(results_v1, 1, FALSE)
+  # Create explanations for V3
+  explanations <- create_explanations(is_residualized = TRUE)
   
-  message("Processing Version 2 outputs...")
-  process_and_create_outputs(results_v2, 2, TRUE)
+  # Create plots for V3
+  create_v3_plots(results_v3)
   
-  message("Processing Version 3 outputs...")
-  process_and_create_outputs(results_v3, 3, TRUE)
+  # Create Excel filename with specific path and format
+  excel_filename <- paste0(current_date, "-Myers_Bendford-V3.xlsx")
+  excel_path <- file.path(output_path_excel, excel_filename)
   
-  message("All analyses complete!")
-}
-
-# Run the analyses if we have results
-if (nrow(results) > 0) {
-  run_all_analyses(results)
+  # Prepare data for Excel export
+  list_of_data <- list(
+    "Country-Year Results" = results_v3,
+    "Correlations Matrix" = as.data.frame(corr_tables$correlations_matrix),
+    "Country Correlations" = corr_tables$country_correlations,
+    "Column Explanations" = explanations
+  )
+  
+  # Export to Excel
+  write_xlsx(list_of_data, excel_path)
+  
+  message("Version 3 analysis complete. Excel results saved to ", excel_path)
+  message("Version 3 plots saved to ", output_path_plots)
+  
 } else {
   message("No results to process. Check input data.")
 }
-
