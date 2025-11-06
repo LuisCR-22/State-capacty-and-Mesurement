@@ -7,6 +7,21 @@
 # V2: Individual-level outlier removal for both wages and ages
 # Both versions run with and without fixed effects using country-level clustered errors
 
+# Benford Wage Analysis V3.0 - Individual-Level Outlier Treatment
+# 
+# Analyzes relationship between Myers' Index (age heaping) and Benford's Law violations
+# in wage data across countries to detect data quality issues and potential manipulation.
+# 
+# Key Enhancement: Individual-level outlier removal approach
+# - V1: Completely raw data (no outlier removal)  
+# - V2: Individual-level IQR outlier removal applied to both ages and wages before analysis
+# 
+# Analysis: 5 regression models with progressive controls (urban, gender, literacy, unemployment)
+# Uses country-clustered standard errors with optional country/year fixed effects
+# Computes both versions simultaneously within each country-year for direct comparison
+# 
+# Output: Excel files comparing raw vs. outlier-filtered results for robustness testing
+
 # 0. Clean up workspace and load libraries
 rm(list = ls())
 gc()

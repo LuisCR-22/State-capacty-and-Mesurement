@@ -7,6 +7,22 @@
 # V1: Raw data, V2: Extreme values excluded
 # Both versions run with and without fixed effects using country-level clustered errors
 
+# Benford Wage Analysis - Data Quality Detection
+# 
+# This script analyzes the relationship between Myers' Index (age heaping) and 
+# Benford's Law violations in wage data across countries to detect data quality issues.
+# 
+# Key Analysis:
+# - Myers' Index: Measures age digit preference (heaping at 0s and 5s)
+# - Benford's Law: Tests if wage first digits follow expected distribution
+# - Hypothesis: Data quality issues cluster (age misreporting correlates with wage misreporting)
+# 
+# Two versions: V1 (raw data with zeros) vs V2 (outliers excluded, no zeros)
+# Five regression models with progressive controls (urban, gender, literacy, unemployment)
+# Uses country-clustered standard errors and optional country/year fixed effects
+# 
+# Output: Excel files with regression results for fraud detection analysis
+
 # 0. Clean up workspace and load libraries
 rm(list = ls())
 gc()

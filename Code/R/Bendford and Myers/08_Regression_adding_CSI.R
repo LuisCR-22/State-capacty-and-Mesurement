@@ -5,6 +5,21 @@
 # Modified: 2025-07-20
 # Purpose: Run regressions with CSI variables using Colombian data
 
+# Colombia CSI-Myers-Benford Regression Analysis
+# 
+# This script examines how Crop Suitability Index (CSI) moderates the relationship
+# between Myers' Index (digit heaping) and Benford's Law violations in Colombian data.
+# 
+# Key Analysis:
+# - Tests 8 regression models across 4 CSI variants (pre/post-1500CE avg/max calories)
+# - Dependent variable: Benford absolute distance (data quality measure)
+# - Main predictors: Myers' Index, CSI, and their interactions with policy dummy (PT≥2016)
+# - Two levels: regional totals and regional-area data
+# - Two panels: with/without region-year fixed effects
+# 
+# Purpose: Investigate whether agricultural productivity potential affects patterns
+# of statistical anomalies in reported data, potentially indicating data manipulation.
+
 # 0. Clean up workspace and load libraries
 rm(list = ls())
 gc()
