@@ -38,7 +38,7 @@ lapply(packages, library, character.only = TRUE)
 ########################################
 
 # ---- UPDATE THIS PATH TO YOUR LOCAL GRD FILE ----
-grd_path <- "C:/PATH_TO_GRD/dfhsw_GRD_public_v1.dta"
+grd_path <- "C:/Users/wb593225/OneDrive - WBG/Desktop/Luis - Private/Mesurement project/03_Data/GRD/GRD_public_v1.dta"
 # grd_path <- "C:/Users/User/Dropbox/Paper state capacity and welfare outcomes/Data_raw/01_GRD_v1/dfhsw_GRD_public_v1.dta"
 
 merge_path  <- "C:/Users/wb593225/OneDrive - WBG/Desktop/Luis - Private/Mesurement project/03_Data/Merge"
