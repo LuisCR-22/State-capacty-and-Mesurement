@@ -11,7 +11,8 @@
 #  MapA_GRD_mines.png           - Mine locations colored by resource type
 #  MapB_resource_value_dept.png - Choropleth of total resource value by dept
 #  PlotC_value_myers.png        - Resource value vs Myers index (state capacity)
-#  PlotD_value_poverty.png      - Resource value vs poverty rate
+#  PlotD_value_poverty_300.png  - Resource value vs poverty rate ($3.00/day)
+#  PlotD2_value_poverty_830.png - Resource value vs poverty rate ($8.30/day)
 #  PlotE_lootable_myers.png     - Myers distribution by lootable/non-lootable
 #  TableF_dept_summary.xlsx     - Dept-level summary table
 #
@@ -165,7 +166,7 @@ mapA <- ggplot() +
                       "  |  N = ", nrow(grd_col_raw), " site-years"),
     x = NULL, y = NULL
   ) +
-  theme_minimal(base_size = 11) +
+  theme_bw(base_size = 11) +
   theme(
     legend.position  = "right",
     panel.grid.major = element_line(colour = "grey85", linewidth = 0.2)
@@ -193,7 +194,7 @@ mapB <- ggplot(col_sf_grd) +
     subtitle = "World Bank prices (2010 USD), aggregated 1994-2014",
     x = NULL, y = NULL
   ) +
-  theme_minimal(base_size = 11) +
+  theme_bw(base_size = 11) +
   theme(panel.grid.major = element_line(colour = "grey85", linewidth = 0.2))
 
 ggsave(file.path(output_path, "MapB_resource_value_dept.png"),
@@ -224,7 +225,7 @@ plotC <- ggplot(dept_plot,
     x = "log(Total GRD World Bank Value + 1)",
     y = "Avg. Standardized Myers Index"
   ) +
-  theme_minimal(base_size = 11)
+  theme_bw(base_size = 11)
 
 # Try to load ggrepel; if not available fall back to geom_text
 if (!requireNamespace("ggrepel", quietly = TRUE)) {
@@ -268,11 +269,45 @@ plotD <- ggplot(dept_year_plot,
     x = "log(GRD World Bank Value + 1)",
     y = "Poverty Rate"
   ) +
-  theme_minimal(base_size = 11)
+  theme_bw(base_size = 11)
 
-ggsave(file.path(output_path, "PlotD_value_poverty.png"),
+ggsave(file.path(output_path, "PlotD_value_poverty_300.png"),
        plotD, width = 9, height = 6, dpi = 150)
-message("  PlotD saved.")
+message("  PlotD (pov $3.00) saved.")
+
+########################################
+# PLOT D2: Resource value vs poverty rate ($8.30/day)
+########################################
+
+message("Generating Plot D2: resource value vs poverty rate ($8.30/day)...")
+
+dept_year_plot2 <- merged %>%
+  filter(ano >= 2008, ano <= 2014,
+         !is.na(grd_wb_value), !is.na(pov_rate_8_30)) %>%
+  mutate(
+    area_label    = ifelse(urban_area == 1, "Urban", "Rural"),
+    log_grd_value = log(grd_wb_value + 1)
+  )
+
+plotD2 <- ggplot(dept_year_plot2,
+               aes(x = log_grd_value, y = pov_rate_8_30 / 100,
+                   colour = area_label)) +
+  geom_point(alpha = 0.55, size = 1.8) +
+  geom_smooth(method = "lm", se = TRUE, linewidth = 0.8) +
+  scale_colour_manual(values = c("Urban" = "#2171b5", "Rural" = "#74c476"),
+                      name = "Area") +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(
+    title = "GRD Resource Value vs Poverty Rate (< $8.30/day, 2021 PPP)",
+    subtitle = "Dept-year obs 2008-2014 | Regression lines by area type",
+    x = "log(GRD World Bank Value + 1)",
+    y = "Poverty Rate"
+  ) +
+  theme_bw(base_size = 11)
+
+ggsave(file.path(output_path, "PlotD2_value_poverty_830.png"),
+       plotD2, width = 9, height = 6, dpi = 150)
+message("  PlotD2 (pov $8.30) saved.")
 
 ########################################
 # PLOT E: Myers distribution by lootable vs non-lootable
@@ -304,7 +339,7 @@ plotE <- ggplot(myers_loot,
     x = NULL,
     y = "Standardized Myers Index"
   ) +
-  theme_minimal(base_size = 11) +
+  theme_bw(base_size = 11) +
   theme(legend.position = "none")
 
 ggsave(file.path(output_path, "PlotE_lootable_myers.png"),
@@ -367,6 +402,7 @@ message("\nFiles created:")
 message("  MapA_GRD_mines.png           - Mine locations colored by resource type")
 message("  MapB_resource_value_dept.png - Choropleth: total resource value by dept")
 message("  PlotC_value_myers.png        - Resource value vs Myers index scatter")
-message("  PlotD_value_poverty.png      - Resource value vs poverty rate scatter")
+message("  PlotD_value_poverty_300.png  - Resource value vs poverty rate ($3.00/day)")
+message("  PlotD2_value_poverty_830.png - Resource value vs poverty rate ($8.30/day)")
 message("  PlotE_lootable_myers.png     - Myers distribution violin: lootable vs not")
 message("  TableF_dept_summary.xlsx     - Dept summary table")
